@@ -1,0 +1,5 @@
+resources:
+  - kafka-namespace.yaml
+  - kafka.yaml
+
+namespace: anoti-kafka-broker
