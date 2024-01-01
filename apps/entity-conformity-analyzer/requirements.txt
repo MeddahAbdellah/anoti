@@ -1,0 +1,8 @@
+fastapi
+uvicorn
+spacy
+beautifulsoup4
+lxml
+fuzzywuzzy
+python-Levenshtein
+kafka-python
