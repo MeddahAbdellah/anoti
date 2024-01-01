@@ -1,0 +1,9 @@
+v: 5
+autoDiscovery:
+  clusterName: erllm-cluster
+awsRegion: eu-west-3
+rbac:
+  serviceAccount:
+    create: true
+    annotations:
+      eks.amazonaws.com/role-arn: "arn:aws:iam::250956544061:role/EKSClusterAutoscalerRole"
