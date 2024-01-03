@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: anoti-kafka-client-config
+data:
+  KAFKA_SASL_USER: root
+  KAFKA_SERVICE_DNS: anoti-kafka.anoti-kafka-broker.svc.cluster.local

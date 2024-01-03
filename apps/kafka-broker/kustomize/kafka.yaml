@@ -28,10 +28,10 @@ metadata:
     helm.sh/chart: kafka-26.6.2
 type: Opaque
 data:
-  client-passwords: "VTBiY0I3MjZxYQ=="
-  system-user-password: "VTBiY0I3MjZxYQ=="
-  inter-broker-password: "Y2w2SGNMb3d1Tg=="
-  controller-password: "ejc4YzkwU3Y2Nw=="
+  client-passwords: "cm9vdA=="
+  system-user-password: "cm9vdA=="
+  inter-broker-password: "UjNiVmVXWHFrRw=="
+  controller-password: "N0piZVNxUjZmRw=="
 ---
 # Source: kafka/templates/secrets.yaml
 apiVersion: v1
@@ -47,7 +47,7 @@ metadata:
     helm.sh/chart: kafka-26.6.2
 type: Opaque
 data:
-  kraft-cluster-id: "VVRCZnJ3RUp0TFQySjR2VkJzRGFFRg=="
+  kraft-cluster-id: "T24ySmRSZEcwSzZ5VWFsWkZoczZ3eQ=="
 ---
 # Source: kafka/templates/controller-eligible/configmap.yaml
 apiVersion: v1
@@ -88,10 +88,10 @@ data:
     inter.broker.listener.name=INTERNAL
     sasl.mechanism.inter.broker.protocol=PLAIN
     # Listeners SASL JAAS configuration
-    listener.name.client.plain.sasl.jaas.config=org.apache.kafka.common.security.plain.PlainLoginModule required user_user1="password-placeholder-0";
+    listener.name.client.plain.sasl.jaas.config=org.apache.kafka.common.security.plain.PlainLoginModule required user_root="password-placeholder-0";
     listener.name.client.scram-sha-256.sasl.jaas.config=org.apache.kafka.common.security.scram.ScramLoginModule required;
     listener.name.client.scram-sha-512.sasl.jaas.config=org.apache.kafka.common.security.scram.ScramLoginModule required;
-    listener.name.internal.plain.sasl.jaas.config=org.apache.kafka.common.security.plain.PlainLoginModule required username="inter_broker_user" password="interbroker-password-placeholder" user_inter_broker_user="interbroker-password-placeholder" user_user1="password-placeholder-0";
+    listener.name.internal.plain.sasl.jaas.config=org.apache.kafka.common.security.plain.PlainLoginModule required username="inter_broker_user" password="interbroker-password-placeholder" user_inter_broker_user="interbroker-password-placeholder" user_root="password-placeholder-0";
     listener.name.internal.scram-sha-256.sasl.jaas.config=org.apache.kafka.common.security.scram.ScramLoginModule required username="inter_broker_user" password="interbroker-password-placeholder";
     listener.name.internal.scram-sha-512.sasl.jaas.config=org.apache.kafka.common.security.scram.ScramLoginModule required username="inter_broker_user" password="interbroker-password-placeholder";
     # End of SASL JAAS configuration
@@ -358,8 +358,8 @@ spec:
         app.kubernetes.io/component: controller-eligible
         app.kubernetes.io/part-of: kafka
       annotations:
-        checksum/configuration: 1cc460684a8b995ae504acc7664400b54cf7504c32898cdc5dd99c4274842439
-        checksum/passwords-secret: 7da4f619d5bdbe5a8d1a5621bf6ecc92c17975053ef0e887ea6c6929a2461869
+        checksum/configuration: 78c3035720b567c268026f8e91b76eff6ee9c4b904fed6365e30e318b6376353
+        checksum/passwords-secret: fd04a557965a028a5f90e98082c9ada0fd7bdebda8aa258aca72661e241de4cf
     spec:
       
       hostNetwork: false
@@ -418,7 +418,7 @@ spec:
             - name: KAFKA_MIN_ID
               value: "0"
             - name: KAFKA_CLIENT_USERS
-              value: "user1"
+              value: "root"
             - name: KAFKA_CLIENT_PASSWORDS
               valueFrom:
                 secretKeyRef:
@@ -476,7 +476,7 @@ spec:
             - name: KAFKA_KRAFT_BOOTSTRAP_SCRAM_USERS
               value: "true"
             - name: KAFKA_CLIENT_USERS
-              value: "user1"
+              value: "root"
             - name: KAFKA_CLIENT_PASSWORDS
               valueFrom:
                 secretKeyRef:

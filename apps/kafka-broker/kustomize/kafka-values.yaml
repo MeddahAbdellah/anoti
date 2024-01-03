@@ -1,0 +1,4 @@
+sasl:
+  client:
+    users: ['root']
+    passwords: ['root']

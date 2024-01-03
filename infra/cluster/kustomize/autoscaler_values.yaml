@@ -1,6 +1,6 @@
 v: 5
 autoDiscovery:
-  clusterName: erllm-cluster
+  clusterName: anoti-cluster
 awsRegion: eu-west-3
 rbac:
   serviceAccount:
