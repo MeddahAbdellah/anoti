@@ -13,18 +13,12 @@ spec:
     spec:
       containers:
       - name: anoti-conformity-analyzer
-        image: 250956544061.dkr.ecr.eu-west-3.amazonaws.com/anoti-conformity-analyzer:1.1.0
+        image: 250956544061.dkr.ecr.eu-west-3.amazonaws.com/anoti-conformity-analyzer:2.1.1
         imagePullPolicy: Always
         tty: true
         envFrom:
         - configMapRef:
-            name: anoti-kafka-client-config
-        env:
-        - name: KAFKA_SASL_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: anoti-kafka-user-passwords
-              key: client-passwords
+            name: anoti-nats-client-config
         ports:
         - name: http
           protocol: TCP

@@ -5,4 +5,5 @@ beautifulsoup4
 lxml
 fuzzywuzzy
 python-Levenshtein
-kafka-python
+asyncio-nats-client
+

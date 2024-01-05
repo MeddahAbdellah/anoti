@@ -2,9 +2,11 @@ import spacy
 from jurisAnalyze import jurisAnalyze
 from erepAnalyze import erepAnalyze
 import os
-from kafka import KafkaConsumer
 import json
-import time
+import asyncio
+from nats.aio.client import Client as NATS
+from datetime import datetime
+
 
 print("Conformity analyzer starting...")
 
@@ -22,59 +24,49 @@ with open(readyz_file_path, "w") as file:
 
 print("Created readiness file")
 
-kafka_sasl_password = os.getenv("KAFKA_SASL_PASSWORD")
-kafka_sasl_user = os.getenv("KAFKA_SASL_USER")
-kafka_service_dns = os.getenv("KAFKA_SERVICE_DNS")
+nats_service_dns = os.getenv("NATS_SERVICE_DNS")
 
-print("Creating consumer...")
+async def run():
+    nats = NATS()
 
-consumer = KafkaConsumer(
-    group_id="entity-conformity-analyzer",
-    bootstrap_servers=kafka_service_dns,
-    security_protocol='SASL_PLAINTEXT',
-    sasl_mechanism='PLAIN',
-    sasl_plain_username=kafka_sasl_user,
-    sasl_plain_password=kafka_sasl_password,
-    enable_auto_commit=True
-)
+    await nats.connect(f"nats://{nats_service_dns}:4222")
 
-print("Created consumer:")
-print(consumer)
+    print("Connected to NATS")
 
-consumer.subscribe(["jurisprudence", "erep"])
+    async def resubscribeJuris():
+        await asyncio.sleep(1)
+        return await nats.subscribe("jurisprudence", queue="juris_group", cb=juris_handler)
 
-print("Subscribed to topics:")
-print(consumer.topics())
+    async def resubscribeErep():
+        await asyncio.sleep(1)
+        return await nats.subscribe("erep", queue="erep_group", cb=erep_handler)
 
-for message in consumer:
-    print("Received message:")
-    print(message)
-    topic = message.topic
-
-    print("Topic:")
-    print(topic)
-
-    data = message.value.decode()
-    parts = data.split(', ')
-    companyName = parts[0].split(': ')[1]
-    risk = parts[1].split(': ')[1]
-
-    print("Analyzing message:")
-    print(companyName)
-    print(risk)
-    output = None
-
-    if topic == "jurisprudence":
-        output = jurisAnalyze(companyName, risk, nlp)
-        output_file = "juris.json"
-    elif topic == "erep":
-        output = erepAnalyze(companyName, risk)
-        output_file = "erep.json"
-
-    print("Finished analyzing")
-    if output is not None:
-        with open(output_file, "a") as file:
+    async def juris_handler(msg):
+        print(f"{datetime.now()} Starting: {msg.data.decode()}")
+        data = json.loads(msg.data.decode())
+        output = jurisAnalyze(data['companyName'], data['risk'], nlp)
+        with open('juris.json', "a") as file:
             json.dump(output, file)
             file.write("\n")
+        print(f"{datetime.now()} Finished: {msg.data.decode()}")
+        global jurisSub
+        jurisSub = await resubscribeJuris()
 
-    time.sleep(5)
+    async def erep_handler(msg):
+        print(f"{datetime.now()} Starting: {msg.data.decode()}")
+        data = json.loads(msg.data.decode())
+        output = erepAnalyze(data['companyName'], data['risk'])
+        with open('erep.json', "a") as file:
+            json.dump(output, file)
+            file.write("\n")
+        print(f"{datetime.now()} Finished: {msg.data.decode()}")
+        global erepSub
+        erepSub = await resubscribeErep()
+
+    jurisSub = await nats.subscribe("jurisprudence", queue="juris_group", cb=juris_handler)
+    erepSub = await nats.subscribe("erep", queue="erep_group", cb=erep_handler)
+
+
+loop = asyncio.get_event_loop()
+loop.run_until_complete(run())
+loop.run_forever()

@@ -2,71 +2,24 @@ from fastapi import FastAPI
 from typing import List
 import riskToArticle
 import os
-from kafka import KafkaProducer
-from kafka import KafkaProducer, KafkaAdminClient
-from kafka.admin import NewTopic, NewPartitions
-from kafka.errors import TopicAlreadyExistsError
 from pydantic import BaseModel
-
-kafka_sasl_password = os.getenv("KAFKA_SASL_PASSWORD")
-kafka_sasl_user = os.getenv("KAFKA_SASL_USER")
-kafka_service_dns = os.getenv("KAFKA_SERVICE_DNS")
-
-admin_client = KafkaAdminClient(
-    bootstrap_servers=kafka_service_dns,
-    security_protocol='SASL_PLAINTEXT',
-    sasl_mechanism='PLAIN',
-    sasl_plain_username=kafka_sasl_user,
-    sasl_plain_password=kafka_sasl_password
-)
-
-def create_or_update_topic(topic_name, num_partitions, replication_factor):
-    print(f"Checking if topic '{topic_name}' exists...")
-    existing_topics = admin_client.list_topics()
-    if topic_name in existing_topics:
-        print(f"Topic '{topic_name}' exists. Checking partitions...")
-        topic_metadata = admin_client.describe_topics([topic_name])
-        current_partitions = len(topic_metadata[0]['partitions'])
-        if current_partitions < num_partitions:
-            print(f"Updating topic '{topic_name}' to have {num_partitions} partitions...")
-            additional_partitions = NewPartitions(total_count=num_partitions)
-            admin_client.create_partitions(
-                topic_partitions={topic_name: additional_partitions},
-                validate_only=False
-            )
-            print(f"Partitions updated for topic '{topic_name}'.")
-        else:
-            print(f"No update needed. Topic '{topic_name}' already has the desired number of partitions.")
-    else:
-        try:
-            print(f"Creating topic '{topic_name}' with {num_partitions} partitions...")
-            topic_list = [NewTopic(name=topic_name, num_partitions=num_partitions, replication_factor=replication_factor)]
-            admin_client.create_topics(new_topics=topic_list, validate_only=False)
-            print(f"Topic '{topic_name}' created.")
-        except TopicAlreadyExistsError:
-            print(f"Topic '{topic_name}' already exists. No action taken.")
-
-
-
-print('Creating jurisprudence topic partitions...')
-create_or_update_topic("jurisprudence", num_partitions=10, replication_factor=1)
-
-print('Creating erep topic partitions...')
-create_or_update_topic("erep", num_partitions=10, replication_factor=1)
+from nats.aio.client import Client as NATS
+import json
 
 app = FastAPI()
 
-producer = KafkaProducer(
-    bootstrap_servers=kafka_service_dns,
-    security_protocol='SASL_PLAINTEXT',
-    sasl_mechanism='PLAIN',
-    sasl_plain_username=kafka_sasl_user,
-    sasl_plain_password=kafka_sasl_password
-)
+# NATS connection setup
+nats_url = os.getenv("NATS_SERVICE_DNS")  # Replace with your NATS server URL
 
-@app.get("/risks")
-async def risks() -> List[str]:
-    return list(riskToArticle.map.keys())
+async def get_nats_client():
+    nc = NATS()
+    await nc.connect(nats_url)
+    return nc
+
+@app.on_event("startup")
+async def startup_event():
+    global nc
+    nc = await get_nats_client()
 
 class JurisprudenceRequest(BaseModel):
     companyName: str
@@ -74,19 +27,23 @@ class JurisprudenceRequest(BaseModel):
 
 @app.post("/jurisprudence")
 async def jurisprudence(request: JurisprudenceRequest) -> str:
-    message = f"Company: {request.companyName}, Risk: {request.risk}"
-    producer.send("jurisprudence", value=message.encode())
-    return "Message sent to the producer"
+    message = {"companyName": request.companyName, "risk": request.risk}
+    await nc.publish("jurisprudence", json.dumps(message).encode())
+    return "Message sent to NATS"
 
 class ErepRequest(BaseModel):
     companyName: str
     risk: str
 
-@app.get("/erep")
+@app.post("/erep")
 async def erep(request: ErepRequest) -> str:
-    message = f"Company: {request.companyName}, Risk: {request.risk}"
-    producer.send("erep", value=message.encode())
-    return "Message sent to the producer"
+    message = {"companyName": request.companyName, "risk": request.risk}
+    await nc.publish("erep", json.dumps(message).encode())
+    return "Message sent to NATS"
+
+@app.get("/risks")
+async def risks() -> List[str]:
+    return list(riskToArticle.map.keys())
 
 @app.get("/healthz")
 async def healthz() -> str:

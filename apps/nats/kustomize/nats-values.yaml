@@ -1,0 +1,8 @@
+config:
+  cluster:
+    enabled: true
+  jetStream:
+    enabled: true
+nats:
+  jetStream:
+    enabled: true
