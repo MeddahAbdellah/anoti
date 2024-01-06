@@ -40,6 +40,32 @@ module "vpc" {
   }
 }
 
+data "aws_ami" "eks_optimized" {
+  most_recent = true
+  owners      = ["602401143452"]
+
+  filter {
+    name   = "name"
+    values = ["amazon-eks-node-*"]
+  }
+}
+
+resource "aws_launch_template" "mongodb_lt" {
+  name_prefix   = "mongodb-lt"
+  image_id      = data.aws_ami.eks_optimized.id
+  instance_type = "r5.large"
+
+  block_device_mappings {
+    device_name = "/dev/sdh"
+
+    ebs {
+      volume_size = 10
+      volume_type = "gp2"
+    }
+  }
+}
+
+
 module "eks" {
   source  = "terraform-aws-modules/eks/aws"
   version = "19.21.0"
@@ -58,13 +84,40 @@ module "eks" {
   }
 
   eks_managed_node_groups = {
-    erllm = {
-      name = "${local.cluster_name}-ng"
+    endpoints = {
+      name = "anoti-endpoints"
 
       instance_types = ["t3.medium"]
 
       min_size     = 1
       max_size     = 10
+      desired_size = 1
+    }
+
+    analyzer = {
+      name = "anoti-analyzer"
+
+      instance_types = ["c6g.xlarge"]
+      ami_type       = "AL2_ARM_64"
+
+      min_size     = 1
+      max_size     = 10
+      desired_size = 1
+    }
+
+    mongodb = {
+      name = "anoti-mongodb"
+
+      instance_types = ["r5.large"]
+
+      launch_template = {
+        id      = aws_launch_template.mongodb_lt.id
+        version = "$Latest"
+      }
+
+
+      min_size     = 1
+      max_size     = 1
       desired_size = 1
     }
   }

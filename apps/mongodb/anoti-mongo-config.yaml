@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: anoti-mongo-config
+data:
+  MONGO_SERVICE_DNS: anoti-mongo-mongodb.anoti-mongo.svc.cluster.local
+  MONGO_USER: root
