@@ -2,7 +2,14 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: anoti-conformity-endpoints-ingress
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    external-dns.alpha.kubernetes.io/hostname: api.anoti.io.
 spec:
+  tls:
+  - hosts:
+    - api.anoti.io
+    secretName: api-anoti-io-tls-secrets
   ingressClassName: nginx
   rules:
   - http:
