@@ -1,0 +1,9 @@
+provider: aws
+zoneType: public
+domainFilters:
+  - anoti.io
+serviceAccount:
+  create: true
+  name: external-dns
+  annotations:
+    eks.amazonaws.com/role-arn: "arn:aws:iam::250956544061:role/EKSClusterExternalDNSRole"

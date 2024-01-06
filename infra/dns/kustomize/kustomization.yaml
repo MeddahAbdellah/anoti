@@ -1,0 +1,4 @@
+resources:
+  - external-dns.yaml
+
+namespace: kube-system
