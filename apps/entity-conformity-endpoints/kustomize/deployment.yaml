@@ -13,7 +13,7 @@ spec:
     spec:
       containers:
       - name: anoti-conformity-endpoints
-        image: 250956544061.dkr.ecr.eu-west-3.amazonaws.com/anoti-conformity-endpoints:3.0.3
+        image: 250956544061.dkr.ecr.eu-west-3.amazonaws.com/anoti-conformity-endpoints:4.1.5
         imagePullPolicy: Always
         tty: true
         env:

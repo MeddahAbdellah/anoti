@@ -13,7 +13,7 @@ spec:
     spec:
       containers:
       - name: anoti-conformity-analyzer
-        image: 250956544061.dkr.ecr.eu-west-3.amazonaws.com/anoti-conformity-analyzer:4.0.2
+        image: 250956544061.dkr.ecr.eu-west-3.amazonaws.com/anoti-conformity-analyzer:5.0.2
         imagePullPolicy: Always
         tty: true
         env:

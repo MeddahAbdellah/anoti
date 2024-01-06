@@ -64,17 +64,24 @@ async def run():
         new_data = {"$set": {"analysis": output}, "$setOnInsert": {"createdAt": datetime.now()}}
         jurisCollection.update_one(query, new_data, upsert=True)
         print(f"{datetime.now()} Finished: {msg.data.decode()}")
+        status = { "topic": "jurisprudence", "companyName": data['companyName'], "risk": data['risk'], "status": "done" }
+        await nats.publish("analysis_status", json.dumps(status).encode())
         global jurisSub
         jurisSub = await resubscribeJuris()
 
     async def erep_handler(msg):
         print(f"{datetime.now()} Starting: {msg.data.decode()}")
+        print(f"{datetime.now()} Starting: {msg.data.decode()}")
         data = json.loads(msg.data.decode())
+        status = { "topic": "erep", "companyName": data['companyName'], "risk": data['risk'], "status": "ongoing" }
+        await nats.publish("analysis_status", json.dumps(status).encode())
         output = erepAnalyze(data['companyName'], data['risk'])
         query = {"companyName": data['companyName'], "risk": data['risk']}
         new_data = {"$set": {"analysis": output}, "$setOnInsert": {"createdAt": datetime.now()}}
         erepCollection.update_one(query, new_data, upsert=True)
         print(f"{datetime.now()} Finished: {msg.data.decode()}")
+        status = { "topic": "erep", "companyName": data['companyName'], "risk": data['risk'], "status": "done" }
+        await nats.publish("analysis_status", json.dumps(status).encode())
         global erepSub
         erepSub = await resubscribeErep()
 

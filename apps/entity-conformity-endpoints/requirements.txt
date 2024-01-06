@@ -2,3 +2,4 @@ fastapi
 uvicorn
 asyncio-nats-client
 pymongo
+websockets

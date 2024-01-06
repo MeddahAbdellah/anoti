@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, WebSocket
 from typing import List
 import riskToArticle
 import os
@@ -8,6 +8,7 @@ import json
 from pymongo import MongoClient
 from typing import Any
 from bson import json_util
+import asyncio
 
 app = FastAPI()
 
@@ -38,6 +39,23 @@ async def get_nats_client():
 async def startup_event():
     global nc
     nc = await get_nats_client()
+
+@app.websocket("/ws")
+async def websocket_endpoint(websocket: WebSocket):
+    await websocket.accept()
+
+    async def message_handler(msg):
+        try:
+            await websocket.send_text(msg.data.decode())
+        except RuntimeError:
+            print("WebSocket disconnected")
+
+    async def nats_listener():
+        await nc.subscribe("analysis_status", cb=message_handler)
+
+    asyncio.create_task(nats_listener())
+
+    await websocket.receive()
 
 class JurisprudenceRequest(BaseModel):
     companyName: str
