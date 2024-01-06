@@ -6,4 +6,4 @@ lxml
 fuzzywuzzy
 python-Levenshtein
 asyncio-nats-client
-
+pymongo

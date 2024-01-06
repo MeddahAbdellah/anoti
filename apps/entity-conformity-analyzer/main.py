@@ -6,7 +6,7 @@ import json
 import asyncio
 from nats.aio.client import Client as NATS
 from datetime import datetime
-
+from pymongo import MongoClient
 
 print("Conformity analyzer starting...")
 
@@ -23,6 +23,21 @@ with open(readyz_file_path, "w") as file:
     file.write("ok")
 
 print("Created readiness file")
+
+print("Connecting to Mongo...")
+
+mongo_service_dns = os.getenv("MONGO_SERVICE_DNS")
+mongo_user = os.getenv("MONGO_USER")
+mongo_password = os.getenv("MONGO_PASSWORD")
+
+print(f"Connecting to Mongo at {mongo_service_dns} with user {mongo_user} and password {mongo_password}")
+
+client = MongoClient(f"mongodb://{mongo_user}:{mongo_password}@{mongo_service_dns}:27017/")
+db = client['anoti']
+jurisCollection = db['juris']
+erepCollection = db['erep']
+print(db.command("ping"))
+print("Connected to Mongo")
 
 nats_service_dns = os.getenv("NATS_SERVICE_DNS")
 
@@ -45,9 +60,9 @@ async def run():
         print(f"{datetime.now()} Starting: {msg.data.decode()}")
         data = json.loads(msg.data.decode())
         output = jurisAnalyze(data['companyName'], data['risk'], nlp)
-        with open('juris.json', "a") as file:
-            json.dump(output, file)
-            file.write("\n")
+        query = {"companyName": data['companyName'], "risk": data['risk']}
+        new_data = {"$set": {"analysis": output}, "$setOnInsert": {"createdAt": datetime.now()}}
+        jurisCollection.update_one(query, new_data, upsert=True)
         print(f"{datetime.now()} Finished: {msg.data.decode()}")
         global jurisSub
         jurisSub = await resubscribeJuris()
@@ -56,9 +71,9 @@ async def run():
         print(f"{datetime.now()} Starting: {msg.data.decode()}")
         data = json.loads(msg.data.decode())
         output = erepAnalyze(data['companyName'], data['risk'])
-        with open('erep.json', "a") as file:
-            json.dump(output, file)
-            file.write("\n")
+        query = {"companyName": data['companyName'], "risk": data['risk']}
+        new_data = {"$set": {"analysis": output}, "$setOnInsert": {"createdAt": datetime.now()}}
+        erepCollection.update_one(query, new_data, upsert=True)
         print(f"{datetime.now()} Finished: {msg.data.decode()}")
         global erepSub
         erepSub = await resubscribeErep()

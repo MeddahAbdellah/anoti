@@ -1,10 +1,10 @@
 # Build stage
-FROM python:3.8 AS builder
+FROM --platform=linux/amd64 python:3.8 AS builder
 COPY . .
 RUN pip install -r requirements.txt
 
 # Final stage
-FROM python:3.8-slim
+FROM --platform=linux/amd64 python:3.8-slim
 COPY --from=builder /usr/local/lib/python3.8/site-packages /usr/local/lib/python3.8/site-packages
 COPY . .
 WORKDIR /

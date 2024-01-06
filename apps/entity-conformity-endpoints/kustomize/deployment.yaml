@@ -13,12 +13,20 @@ spec:
     spec:
       containers:
       - name: anoti-conformity-endpoints
-        image: 250956544061.dkr.ecr.eu-west-3.amazonaws.com/anoti-conformity-endpoints:2.0.0
+        image: 250956544061.dkr.ecr.eu-west-3.amazonaws.com/anoti-conformity-endpoints:3.0.3
         imagePullPolicy: Always
         tty: true
+        env:
+          - name: MONGO_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: anoti-mongo-mongodb
+                key: mongodb-root-password
         envFrom:
         - configMapRef:
             name: anoti-nats-client-config
+        - configMapRef:
+            name: anoti-mongo-config
         readinessProbe:
           tcpSocket:
             port: 8080
@@ -36,3 +44,5 @@ spec:
           limits:
             memory: "2048Mi"
             cpu: "0.9"
+      nodeSelector:
+        "node.kubernetes.io/instance-type": "t3.medium"

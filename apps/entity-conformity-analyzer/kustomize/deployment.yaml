@@ -13,12 +13,20 @@ spec:
     spec:
       containers:
       - name: anoti-conformity-analyzer
-        image: 250956544061.dkr.ecr.eu-west-3.amazonaws.com/anoti-conformity-analyzer:2.1.1
+        image: 250956544061.dkr.ecr.eu-west-3.amazonaws.com/anoti-conformity-analyzer:4.0.2
         imagePullPolicy: Always
         tty: true
+        env:
+          - name: MONGO_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: anoti-mongo-mongodb
+                key: mongodb-root-password
         envFrom:
         - configMapRef:
             name: anoti-nats-client-config
+        - configMapRef:
+            name: anoti-mongo-config
         ports:
         - name: http
           protocol: TCP
@@ -26,7 +34,9 @@ spec:
         resources:
           requests:
             memory: "2048Mi"
-            cpu: "0.5"
+            cpu: "3.5"
           limits:
             memory: "3500Mi"
-            cpu: "0.9"
+            cpu: "3.9"
+      nodeSelector:
+        "node.kubernetes.io/instance-type": "c6g.xlarge"
