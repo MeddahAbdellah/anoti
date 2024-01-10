@@ -12,7 +12,8 @@ spec:
     secretName: api-anoti-io-tls-secrets
   ingressClassName: nginx
   rules:
-  - http:
+  - host: api.anoti.io
+    http:
       paths:
       - path: /
         pathType: Prefix
